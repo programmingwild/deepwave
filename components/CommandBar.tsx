@@ -23,6 +23,7 @@ export function CommandBar() {
   const connected = true;
 
   const handleEStop = () => {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate([20, 30, 20]);
     if (!confirmEStop) {
       setConfirmEStop(true);
       return;

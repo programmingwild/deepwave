@@ -1,0 +1,14 @@
+{
+  "appId": "com.programmingwild.deepwave",
+  "appName": "DEEPWAVE",
+  "webDir": "out",
+  "bundledWebRuntime": false,
+  "android": {
+    "backgroundColor": "#030812",
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

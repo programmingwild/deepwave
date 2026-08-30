@@ -51,7 +51,7 @@ export default function Page() {
     <div className="grid-bg min-h-screen pb-10">
       <CommandBar />
 
-      <main className="mx-auto max-w-[1600px] space-y-3 p-3 sm:p-4">
+      <main className="pb-safe px-safe mx-auto max-w-[1600px] space-y-3 p-3 sm:p-4">
         <SimulationControls />
 
         {/* hero: health score + telemetry */}

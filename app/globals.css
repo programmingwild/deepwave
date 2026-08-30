@@ -25,6 +25,20 @@ html {
   color-scheme: dark;
 }
 
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* notch / gesture-bar safe areas when running standalone */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+.px-safe {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
 body {
   background-color: var(--abyss);
   color: var(--txt);

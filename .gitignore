@@ -21,3 +21,13 @@ npm-debug.log*
 
 # typescript
 *.tsbuildinfo
+
+# android build toolchain + outputs (local)
+.tools/
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/capacitor-cordova-android-plugins/
+out/
+dist/

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DEEPWAVE</string>
+    <string name="title_activity_main">DEEPWAVE</string>
+    <string name="package_name">com.programmingwild.deepwave</string>
+    <string name="custom_url_scheme">com.programmingwild.deepwave</string>
+</resources>

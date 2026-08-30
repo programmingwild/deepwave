@@ -36,6 +36,11 @@ export function JoystickControl() {
     engine.setJoystick(0, 0);
   }, []);
 
+  const engageHaptic = useCallback(() => {
+    if (!control.active) return;
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) navigator.vibrate(10);
+  }, [control.active]);
+
   const stepDepth = useCallback(
     (dir: 1 | -1) => {
       const cur = control.depthTarget ?? r.depth;
@@ -90,7 +95,7 @@ export function JoystickControl() {
         {/* joystick pad */}
         <div
           ref={padRef}
-          className="relative mx-auto aspect-square w-full max-w-[220px] touch-none select-none rounded-full border border-[var(--line)] bg-black/40"
+          className="relative mx-auto aspect-square w-full max-w-[280px] touch-none select-none rounded-full border border-[var(--line)] bg-black/40"
           style={{
             boxShadow: "inset 0 0 24px rgba(8,25,50,0.8)",
             cursor: control.active ? "crosshair" : "not-allowed",
@@ -98,6 +103,7 @@ export function JoystickControl() {
           onPointerDown={(e) => {
             if (!control.active) return;
             e.currentTarget.setPointerCapture(e.pointerId);
+            engageHaptic();
             applyAxis(e.clientX, e.clientY);
           }}
           onPointerMove={(e) => {
