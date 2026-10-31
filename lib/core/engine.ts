@@ -296,6 +296,8 @@ private state: DashboardState;
   // simulation internals
   private rng = mulberry32(1337);
   private drift: Record<ParamId, number> = { ...SENSOR_BASE } as Record<ParamId, number>;
+  /** live readings from a connected hardware sensor node (pH/turbidity/TDS). When set, overrides the simulated values for those params. */
+  private hardwareOverride: Partial<Record<ParamId, number>> | null = null;
 private rateWindow = Object.fromEntries(
     PARAM_ORDER.map((id) => [id, [] as number[]]),
   ) as unknown as Record<ParamId, number[]>;
@@ -449,6 +451,30 @@ setZoom(v: number): void {
     cam.vision = !cam.vision;
     this.addEvent(cam.vision ? "INFO" : "INFO", cam.vision ? "AI vision engaged" : "AI vision disengaged", cam.vision ? "YOLOv8-lite object detector running on edge" : "Vision overlay disabled", cam.vision ? "Detecting plumes / biology / debris" : "Raw camera feed");
     this.emit();
+  }
+
+  /** Feed live readings from a connected hardware sensor node (pH, turbidity, TDS, ...). Pass null/empty to clear. */
+  setHardwareReadings(readings: Partial<Record<ParamId, number>> | null): void {
+    if (!readings) {
+      this.hardwareOverride = null;
+    } else {
+      const cleaned: Partial<Record<ParamId, number>> = {};
+      for (const k of Object.keys(readings) as ParamId[]) {
+        const v = readings[k];
+        if (typeof v === "number" && Number.isFinite(v)) cleaned[k] = v;
+      }
+      this.hardwareOverride = Object.keys(cleaned).length ? cleaned : null;
+    }
+    this.emit();
+  }
+
+  clearHardwareReadings(): void {
+    this.hardwareOverride = null;
+    this.emit();
+  }
+
+  isHardwareLinked(): boolean {
+    return this.hardwareOverride !== null;
   }
 
   /** Recompute the survey path: spiral sweep around the active hotspot, or a full-area grid sweep. */
@@ -801,7 +827,9 @@ acknowledgeAllAlerts(): void {
     for (const id of PARAM_ORDER) {
       const def = PARAMS[id];
       let v = this.drift[id];
-      if (offset[id] !== 0) {
+      if (this.hardwareOverride && this.hardwareOverride[id] !== undefined) {
+        v = this.hardwareOverride[id] as number;
+      } else if (offset[id] !== 0) {
         const t = POLLUTION_TARGETS[id];
         if (t.kind === "add") {
           v = v + offset[id];
@@ -811,7 +839,9 @@ acknowledgeAllAlerts(): void {
           v = v * (1 + offset[id] / Math.max(0.1, v));
         }
       }
-v += (this.rng() - 0.5) * def.noise * 0.25;
+      if (!(this.hardwareOverride && this.hardwareOverride[id] !== undefined)) {
+        v += (this.rng() - 0.5) * def.noise * 0.25;
+      }
       // sensor fault: readings go noisy/unstable until the channel recovers
       if (this.state.sensors[id].fault) v += (this.rng() - 0.5) * def.noise * 8;
       values[id] = clamp(v, def.range.min - def.range.max * 0.3, def.range.max * 1.4);

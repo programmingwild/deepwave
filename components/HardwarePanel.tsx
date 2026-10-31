@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Panel, Chip, FieldRow } from "@/components/ui";
+import { engine } from "@/lib/core/engine";
 
-type Reading = { distance: number; speed: number; state: string; ts: number };
+type Reading = { ph: number | null; turbidity: number | null; tds: number | null; distance: number; level: number | null; speed: number; state: string; ts: number };
 
 export function HardwarePanel() {
   const [supported] = useState(() => typeof navigator !== "undefined" && "serial" in navigator);
@@ -29,6 +30,7 @@ export function HardwarePanel() {
     writerRef.current = null;
     setConnected(false);
     setReading(null);
+    engine.clearHardwareReadings();
     pushLog("disconnected");
   }, [pushLog]);
 
@@ -61,13 +63,44 @@ export function HardwarePanel() {
                 continue;
               }
               const parts = line.split(",");
-              if (parts.length < 3) { pushLog("bad: " + line); continue; }
-              const dist = parseFloat(parts[0]);
-              const speed = parseInt(parts[1], 10);
-              const state = parts[2];
+              // New format: ph,turbidity,tds,distance,level,speed,state (7 fields)
+              // Legacy:     dist,level,speed,state (4 fields) or dist,speed,state (3 fields)
+              let ph: number | null = null;
+              let turbidity: number | null = null;
+              let tds: number | null = null;
+              let dist = NaN;
+              let level: number | null = null;
+              let speed = 0;
+              let state = parts[parts.length - 1];
+              if (parts.length >= 7) {
+                ph = parseFloat(parts[0]); if (isNaN(ph)) ph = null;
+                turbidity = parseFloat(parts[1]); if (isNaN(turbidity)) turbidity = null;
+                tds = parseFloat(parts[2]); if (isNaN(tds)) tds = null;
+                dist = parseFloat(parts[3]);
+                level = parseFloat(parts[4]); if (isNaN(level)) level = null;
+                speed = parseInt(parts[5], 10); if (isNaN(speed)) speed = 0;
+              } else if (parts.length >= 4) {
+                dist = parseFloat(parts[0]);
+                level = parseFloat(parts[1]); if (isNaN(level)) level = null;
+                speed = parseInt(parts[2], 10); if (isNaN(speed)) speed = 0;
+              } else {
+                dist = parseFloat(parts[0]);
+                speed = parseInt(parts[1], 10); if (isNaN(speed)) speed = 0;
+              }
               if (isNaN(dist)) continue;
-              setReading({ distance: dist, speed: isNaN(speed) ? 0 : speed, state, ts: Date.now() });
+              const r: Reading = { ph, turbidity, tds, distance: dist, level, speed, state, ts: Date.now() };
+              setReading(r);
+              // feed real water-quality readings into the dashboard engine
+              const hw: Partial<Record<"ph" | "turbidity" | "tds", number>> = {};
+              if (ph !== null) hw.ph = ph;
+              if (turbidity !== null) hw.turbidity = turbidity;
+              if (tds !== null) hw.tds = tds;
+              if (Object.keys(hw).length) engine.setHardwareReadings(hw as any);
+              else if (ph === null && turbidity === null && tds === null) {
+                /* keep existing override if any; only clear when explicitly disconnected */
+              }
               if (dist > 0 && dist < 15) pushLog("⚠ CLOSE OBJECT @ " + dist.toFixed(1) + " cm");
+              if (level !== null && level < 30) pushLog("⚠ LOW LEVEL " + level.toFixed(0) + "%");
             }
           }
         } catch (e: any) {
@@ -103,12 +136,12 @@ export function HardwarePanel() {
     };
   }, []);
 
-  const close = reading && reading.distance > 0 && reading.distance < 15;
+  const lowLevel = reading && reading.level !== null && reading.level < 30;
   const stale = reading && Date.now() - reading.ts > 3000;
 
   return (
     <Panel
-      title="HARDWARE LINK — ARDUINO ROVER"
+      title="HARDWARE LINK — WATER QUALITY NODE"
       right={
         <Chip tone={connected ? "ok" : "default"}>
           {connected ? "LINKED · COM" : "DISCONNECTED"}
@@ -145,19 +178,36 @@ export function HardwarePanel() {
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           <div className="rounded border border-[var(--line)] bg-black/30 px-2 py-2 text-center">
-            <div className="section-label">SONAR</div>
+            <div className="section-label">DISTANCE</div>
             <div
               className="mono text-[18px] font-bold"
               style={{ color: reading && !stale ? "var(--cyan)" : "var(--txt-dim)" }}
             >
               {reading && !stale ? reading.distance.toFixed(1) : "—"}
             </div>
-            <div className="mono text-[9px] text-slate-500">cm</div>
+            <div className="mono text-[9px] text-slate-500">cm to surface</div>
           </div>
           <div className="rounded border border-[var(--line)] bg-black/30 px-2 py-2 text-center">
-            <div className="section-label">THRUSTER</div>
+            <div className="section-label">WATER LEVEL</div>
+            <div
+              className="mono text-[18px] font-bold"
+              style={{
+                color:
+                  reading && reading.level !== null && reading.level < 30
+                    ? "var(--crit)"
+                    : reading && reading.level !== null && reading.level > 85
+                    ? "var(--warn)"
+                    : "var(--health)",
+              }}
+            >
+              {reading && !stale && reading.level !== null ? reading.level.toFixed(0) + "%" : "—"}
+            </div>
+            <div className="mono text-[9px] text-slate-500">tank fill</div>
+          </div>
+          <div className="rounded border border-[var(--line)] bg-black/30 px-2 py-2 text-center">
+            <div className="section-label">PUMP</div>
             <div
               className="mono text-[18px] font-bold"
               style={{ color: reading && reading.speed > 0 ? "var(--cyan)" : "var(--txt-dim)" }}
@@ -172,42 +222,59 @@ export function HardwarePanel() {
               className="mono text-[14px] font-bold"
               style={{
                 color:
-                  reading?.state === "FWD"
+                  reading?.state === "PUMPING"
+                    ? "var(--cyan)"
+                    : reading?.state === "IDLE"
                     ? "var(--health)"
-                    : reading?.state === "REV"
-                    ? "var(--warn)"
                     : "var(--txt-dim)",
               }}
             >
               {reading && !stale ? reading.state : "—"}
             </div>
             <div className="mono text-[9px] text-slate-500">
-              {close ? "⚠ CLOSE" : "OK"}
+              {reading && reading.level !== null && reading.level < 30 ? "⚠ LOW" : "OK"}
             </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded border border-[var(--line)] bg-black/30 px-2 py-2 text-center">
+            <div className="section-label">pH</div>
+            <div className="mono text-[18px] font-bold" style={{ color: reading && !stale && reading.ph !== null ? "var(--cyan)" : "var(--txt-dim)" }}>
+              {reading && !stale && reading.ph !== null ? reading.ph.toFixed(2) : "—"}
+            </div>
+            <div className="mono text-[9px] text-slate-500">0–14</div>
+          </div>
+          <div className="rounded border border-[var(--line)] bg-black/30 px-2 py-2 text-center">
+            <div className="section-label">TURBIDITY</div>
+            <div className="mono text-[18px] font-bold" style={{ color: reading && !stale && reading.turbidity !== null ? "var(--health)" : "var(--txt-dim)" }}>
+              {reading && !stale && reading.turbidity !== null ? reading.turbidity.toFixed(1) : "—"}
+            </div>
+            <div className="mono text-[9px] text-slate-500">NTU</div>
+          </div>
+          <div className="rounded border border-[var(--line)] bg-black/30 px-2 py-2 text-center">
+            <div className="section-label">TDS</div>
+            <div className="mono text-[18px] font-bold" style={{ color: reading && !stale && reading.tds !== null ? "#a78bfa" : "var(--txt-dim)" }}>
+              {reading && !stale && reading.tds !== null ? Math.round(reading.tds) : "—"}
+            </div>
+            <div className="mono text-[9px] text-slate-500">mg/L</div>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5">
           <button
-            onClick={() => send("F")}
+            onClick={() => send("P")}
             disabled={!connected}
             className="flex-1 border border-[var(--line)] bg-black/30 py-1.5 font-mono text-[10px] font-bold tracking-widest text-slate-300 transition-colors hover:border-[var(--cyan)]/50 hover:text-[var(--cyan)] disabled:opacity-30"
           >
-            ▲ FWD
+            ▶ PUMP ON
           </button>
           <button
-            onClick={() => send("R")}
-            disabled={!connected}
-            className="flex-1 border border-[var(--line)] bg-black/30 py-1.5 font-mono text-[10px] font-bold tracking-widest text-slate-300 transition-colors hover:border-[var(--cyan)]/50 hover:text-[var(--cyan)] disabled:opacity-30"
-          >
-            ▼ REV
-          </button>
-          <button
-            onClick={() => send("S")}
+            onClick={() => send("O")}
             disabled={!connected}
             className="flex-1 border border-[var(--line)] bg-black/30 py-1.5 font-mono text-[10px] font-bold tracking-widest text-slate-300 transition-colors hover:border-[var(--crit)]/50 hover:text-[var(--crit)] disabled:opacity-30"
           >
-            ■ STOP
+            ■ PUMP OFF
           </button>
           <button
             onClick={() => send("A")}
@@ -216,6 +283,13 @@ export function HardwarePanel() {
           >
             ◎ AUTO
           </button>
+          <button
+            onClick={() => send("T20")}
+            disabled={!connected}
+            className="flex-1 border border-[var(--line)] bg-black/30 py-1.5 font-mono text-[10px] font-bold tracking-widest text-slate-300 transition-colors hover:border-[var(--health)]/50 hover:text-[var(--health)] disabled:opacity-30"
+          >
+            TANK 20cm
+          </button>
         </div>
 
         <div className="max-h-24 overflow-auto rounded border border-[var(--line)] bg-black/30 p-2 font-mono text-[9px] text-slate-500">
@@ -223,7 +297,7 @@ export function HardwarePanel() {
         </div>
 
         <p className="text-[9px] leading-relaxed text-slate-500">
-          Connects directly to the Arduino over the COM port via Web Serial (Chrome/Edge only). No separate bridge page needed. Keep the Arduino IDE Serial Monitor closed while connected.
+          Reads pH, turbidity, TDS, water level and pump state directly from the Arduino over the COM port (Web Serial, Chrome/Edge only). Real pH/turbidity/TDS values override the simulated telemetry in the dashboard above. Keep the Arduino IDE Serial Monitor closed while connected.
         </p>
       </div>
     </Panel>
