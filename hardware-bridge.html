@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>DEEPWAVE — Hardware Bridge</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { --abyss:#030812; --cyan:#22d3ee; --txt:#e0f2fe; --dim:#94a3b8; --warn:#fbbf24; --crit:#f87171; --ok:#34d399; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--abyss); color:var(--txt); font-family:ui-monospace,Menlo,monospace; min-height:100vh; padding:16px; }
+  h1 { color:var(--cyan); letter-spacing:.2em; font-size:16px; margin:0 0 4px; text-shadow:0 0 12px rgba(34,211,238,.5); }
+  .sub { color:var(--dim); font-size:11px; letter-spacing:.15em; margin-bottom:16px; }
+  .card { border:1px solid rgba(34,211,238,.2); background:linear-gradient(180deg,rgba(10,22,46,.7),rgba(6,13,28,.6)); padding:14px; border-radius:4px; margin-bottom:12px; }
+  .row { display:flex; justify-content:space-between; align-items:baseline; padding:6px 0; border-bottom:1px solid rgba(34,211,238,.08); }
+  .row:last-child { border-bottom:none; }
+  .k { color:var(--dim); font-size:11px; letter-spacing:.15em; }
+  .v { font-size:22px; font-weight:700; }
+  .btn { background:rgba(34,211,238,.1); border:1px solid rgba(34,211,238,.4); color:var(--cyan); padding:10px 14px; font-family:inherit; font-size:12px; letter-spacing:.15em; cursor:pointer; border-radius:3px; margin:4px 4px 0 0; }
+  .btn:hover { background:rgba(34,211,238,.2); }
+  .btn.danger { border-color:rgba(248,113,113,.4); color:var(--crit); background:rgba(248,113,113,.1); }
+  .log { height:160px; overflow:auto; font-size:11px; color:var(--dim); background:rgba(0,0,0,.3); padding:8px; border-radius:3px; }
+  .status { font-size:12px; padding:8px 10px; border-radius:3px; margin-bottom:12px; }
+  .status.ok { background:rgba(52,211,153,.1); color:var(--ok); border:1px solid rgba(52,211,153,.3); }
+  .status.warn { background:rgba(251,191,36,.1); color:var(--warn); border:1px solid rgba(251,191,36,.3); }
+  .status.err { background:rgba(248,113,113,.1); color:var(--crit); border:1px solid rgba(248,113,113,.3); }
+  .bar { height:8px; background:rgba(0,0,0,.4); border-radius:4px; overflow:hidden; margin-top:6px; }
+  .bar > div { height:100%; background:var(--cyan); transition:width .2s; box-shadow:0 0 6px var(--cyan); }
+</style>
+</head>
+<body>
+  <h1>DEEPWAVE — HARDWARE BRIDGE</h1>
+  <div class="sub">ARDUINO UNO · HC-SR04 + MOTOR DRIVER · WEB SERIAL</div>
+
+  <div id="status" class="status warn">DISCONNECTED — click CONNECT</div>
+
+  <div class="card">
+    <div class="row"><span class="k">DISTANCE</span><span class="v" id="dist">—</span></div>
+    <div class="bar"><div id="distbar" style="width:0%"></div></div>
+    <div class="row"><span class="k">MOTOR SPEED</span><span class="v" id="speed">—</span></div>
+    <div class="row"><span class="k">STATE</span><span class="v" id="state">—</span></div>
+    <div class="row"><span class="k">BROADCAST</span><span class="v" id="bc">OFF</span></div>
+  </div>
+
+  <div>
+    <button class="btn" id="connect">CONNECT</button>
+    <button class="btn" id="fwd">FWD</button>
+    <button class="btn" id="rev">REV</button>
+    <button class="btn" id="stop">STOP</button>
+    <button class="btn" id="auto">AUTO SWEEP</button>
+    <button class="btn danger" id="disconnect">DISCONNECT</button>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <div class="sub" style="margin-bottom:6px">SERIAL LOG</div>
+    <div class="log" id="log"></div>
+  </div>
+
+<script>
+  let port, reader, writer, reading = false;
+  const bc = new BroadcastChannel("deepwave-hw");
+  const status = document.getElementById("status");
+  const log = (m) => { const d = document.createElement("div"); d.textContent = m; logEl().appendChild(d); logEl().scrollTop = 9e9; };
+  const logEl = () => document.getElementById("log");
+
+  function setStatus(cls, txt) { status.className = "status " + cls; status.textContent = txt; }
+
+  async function connect() {
+    if (!("serial" in navigator)) { setStatus("err","Web Serial not supported — use Chrome/Edge"); return; }
+    try {
+      port = await navigator.serial.requestPort();
+      await port.open({ baudRate: 9600 });
+      writer = port.writable.getWriter();
+      reader = port.readable.getReader();
+      reading = true;
+      setStatus("ok","CONNECTED — streaming telemetry");
+      readLoop();
+    } catch (e) { setStatus("err","CONNECT FAILED: " + e.message); }
+  }
+
+  async function readLoop() {
+    const dec = new TextDecoder();
+    let buf = "";
+    while (reading) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i).trim();
+        buf = buf.slice(i + 1);
+        if (!line || line.startsWith("DEEPWAVE")) { if (line) log("» " + line); continue; }
+        const parts = line.split(",");
+        if (parts.length < 3) { log("bad: " + line); continue; }
+        const dist = parseFloat(parts[0]);
+        const speed = parseInt(parts[1], 10);
+        const state = parts[2];
+        document.getElementById("dist").textContent = (isNaN(dist) ? "—" : dist.toFixed(1) + " cm");
+        document.getElementById("speed").textContent = isNaN(speed) ? "—" : speed;
+        document.getElementById("state").textContent = state;
+        document.getElementById("distbar").style.width = Math.min(100, Math.max(0, (dist / 60) * 100)) + "%";
+        document.getElementById("bc").textContent = "ON";
+        bc.postMessage({ distance: dist, speed, state, ts: Date.now() });
+        if (dist > 0 && dist < 15) log("⚠ CLOSE OBJECT @ " + dist.toFixed(1) + " cm");
+      }
+    }
+  }
+
+  async function send(cmd) {
+    if (!writer) return;
+    await writer.write(new TextEncoder().encode(cmd));
+    log("« " + cmd);
+  }
+
+  async function disconnect() {
+    reading = false;
+    try { await reader?.cancel(); } catch {}
+    try { writer?.releaseLock(); } catch {}
+    try { await port?.close(); } catch {}
+    port = null; reader = null; writer = null;
+    setStatus("warn","DISCONNECTED — click CONNECT");
+    document.getElementById("bc").textContent = "OFF";
+  }
+
+  document.getElementById("connect").onclick = connect;
+  document.getElementById("disconnect").onclick = disconnect;
+  document.getElementById("fwd").onclick = () => send("F");
+  document.getElementById("rev").onclick = () => send("R");
+  document.getElementById("stop").onclick = () => send("S");
+  document.getElementById("auto").onclick = () => send("A");
+</script>
+</body>
+</html>

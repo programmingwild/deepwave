@@ -23,6 +23,7 @@ import { ReportPanel } from "@/components/ReportPanel";
 import { AlertCenter } from "@/components/AlertCenter";
 import { ArchitecturePanel } from "@/components/ArchitecturePanel";
 import { SimulationControls } from "@/components/SimulationControls";
+import { HardwareLink } from "@/components/HardwareLink";
 import { Panel } from "@/components/ui";
 
 export default function Page() {
@@ -50,6 +51,7 @@ export default function Page() {
   return (
     <div className="grid-bg min-h-screen pb-10">
       <CommandBar />
+      <HardwareLink />
 
       <main className="pb-safe px-safe mx-auto max-w-[1600px] space-y-3 p-3 sm:p-4">
         <SimulationControls />
