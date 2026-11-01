@@ -3,18 +3,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Panel, Chip, FieldRow } from "@/components/ui";
 import { engine } from "@/lib/core/engine";
+import { useClock } from "@/lib/hooks/useTelemetry";
 
 type Reading = { ph: number | null; turbidity: number | null; tds: number | null; distance: number; level: number | null; speed: number; state: string; ts: number };
 
 export function HardwarePanel() {
   const [supported] = useState(() => typeof navigator !== "undefined" && "serial" in navigator);
   const [connected, setConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [reading, setReading] = useState<Reading | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const portRef = useRef<any>(null);
   const readerRef = useRef<any>(null);
   const writerRef = useRef<any>(null);
   const readingRef = useRef(false);
+  useClock();
 
   const pushLog = useCallback((m: string) => {
     setLog((prev) => [...prev.slice(-40), m]);
@@ -36,7 +39,8 @@ export function HardwarePanel() {
   }, [pushLog]);
 
   const connect = useCallback(async () => {
-    if (!supported) return;
+    if (!supported || connecting || connected) return;
+    setConnecting(true);
     try {
       const port = await (navigator as any).serial.requestPort();
       await port.open({ baudRate: 9600 });
@@ -112,8 +116,10 @@ export function HardwarePanel() {
     } catch (e: any) {
       pushLog("connect failed: " + (e?.message ?? e));
       setConnected(false);
+    } finally {
+      setConnecting(false);
     }
-  }, [supported, pushLog]);
+  }, [connected, connecting, supported, pushLog]);
 
   const send = useCallback(
     async (cmd: string) => {
@@ -130,13 +136,21 @@ export function HardwarePanel() {
   );
 
   useEffect(() => {
+    if (!supported || typeof navigator === "undefined") return;
+    const serial = (navigator as any).serial;
+    const onSerialDisconnect = (event: Event) => {
+      const port = (event as any).port;
+      if (port === portRef.current) void disconnect();
+    };
+    serial.addEventListener("disconnect", onSerialDisconnect);
     return () => {
+      serial.removeEventListener("disconnect", onSerialDisconnect);
       readingRef.current = false;
       try { readerRef.current?.cancel(); } catch {}
       try { writerRef.current?.releaseLock(); } catch {}
       try { portRef.current?.close(); } catch {}
     };
-  }, []);
+  }, [disconnect, supported]);
 
   const lowLevel = reading && reading.level !== null && reading.level < 30;
   const stale = reading && Date.now() - reading.ts > 3000;
@@ -162,10 +176,10 @@ export function HardwarePanel() {
           {!connected ? (
             <button
               onClick={connect}
-              disabled={!supported}
+              disabled={!supported || connecting}
               className="clip-corners border border-cyan-400/40 bg-cyan-400/10 px-4 py-2 font-mono text-[11px] font-bold tracking-widest text-cyan-300 transition-all hover:bg-cyan-400/20 disabled:opacity-30"
             >
-              ◉ CONNECT (COM PORT)
+              {connecting ? "… OPENING COM PORT" : "◉ CONNECT (COM PORT)"}
             </button>
           ) : (
             <button
