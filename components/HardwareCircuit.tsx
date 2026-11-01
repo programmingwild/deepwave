@@ -113,13 +113,14 @@ export function HardwareCircuit() {
         const model = gltf.scene;
         model.position.copy(position);
         model.scale.setScalar(scale);
-        model.rotation.x = -0.08;
         scene.add(model);
         assets.set(name, model);
       });
     };
-    load("raspberry-pi", new THREE.Vector3(-7, 0, 0), 0.78);
-    load("arduino-uno", new THREE.Vector3(0, 0, 0), 0.78);
+    // Supplied STEP files are converted to millimetre GLBs; these scales keep
+    // their real proportions while fitting the circuit board layout.
+    load("raspberry-pi-real", new THREE.Vector3(-7, 0, 0), 0.12);
+    load("arduino-uno-real", new THREE.Vector3(0, 0, 0), 0.1);
     load("sensor-pack", new THREE.Vector3(7, 0, 0), 0.78);
 
     const wirePoints: [THREE.Vector3, THREE.Vector3][] = [

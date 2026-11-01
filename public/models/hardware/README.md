@@ -1,9 +1,9 @@
 # Hardware GLB assets
 
-These lightweight GLB assets are generated from the official board identities and approximate physical dimensions so the dashboard can render a self-contained circuit view without depending on an external CDN.
+The Arduino Uno and Raspberry Pi GLBs are converted from the supplied STEP CAD files. The sensor carrier remains a lightweight generated model because no sensor STEP files were supplied.
 
-- `arduino-uno.glb`: Arduino Uno R3 reference: https://docs.arduino.cc/hardware/uno-rev3/
-- `raspberry-pi.glb`: Raspberry Pi 4 Model B reference: https://www.raspberrypi.com/products/raspberry-pi-4-model-b/
+- `arduino-uno-real.glb`: supplied `arduino uno.STEP`, converted with OpenCascade
+- `raspberry-pi-real.glb`: supplied `Raspberry Pi 4 Model B.STEP`, converted with OpenCascade
 - `sensor-pack.glb`: DEEPWAVE water-quality carrier based on the sensor wiring in `arduino/DEEPWAVE_WaterQuality.ino`
 
-Regenerate with `npm run models:generate`.
+Regenerate generated references with `npm run models:generate` or convert the supplied STEP files with `npm run models:convert-step`.

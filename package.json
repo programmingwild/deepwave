@@ -12,6 +12,7 @@
     "test:engine": "tsx scripts/engine-test.ts",
     "e2e": "node scripts/e2e-check.cjs",
     "models:generate": "node scripts/generate-hardware-glb.mjs",
+    "models:convert-step": "node scripts/convert-step-to-glb.mjs",
     "ml:fetch": "python ml/fetch_dataset.py",
     "ml:check": "python ml/check_dataset.py",
     "ml:train": "python ml/train.py"
@@ -33,6 +34,7 @@
     "@types/react": "18.3.5",
     "@types/react-dom": "18.3.0",
     "autoprefixer": "10.4.20",
+    "occt-import-js": "^0.0.23",
     "postcss": "8.4.47",
     "puppeteer-core": "^25.8.0",
     "tailwindcss": "3.4.13",
