@@ -24,6 +24,7 @@ import { AlertCenter } from "@/components/AlertCenter";
 import { ArchitecturePanel } from "@/components/ArchitecturePanel";
 import { SimulationControls } from "@/components/SimulationControls";
 import { HardwarePanel } from "@/components/HardwarePanel";
+import { AIPredictionPanel } from "@/components/AIPredictionPanel";
 import { Panel } from "@/components/ui";
 
 export default function Page() {
@@ -100,6 +101,9 @@ export default function Page() {
 
         {/* trend analysis */}
         <TrendCharts />
+
+        {/* AI pollution prediction */}
+        <AIPredictionPanel />
 
         {/* diagnostics + power + report */}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
