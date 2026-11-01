@@ -57,13 +57,13 @@ function suppress(detections: Detection[]): Detection[] {
 }
 
 export async function createOnnxDetector(
-  modelUrl = "/models/deepwave-pollution.onnx",
+  modelUrl = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/models/deepwave-pollution.onnx`,
   labels = DEFAULT_LABELS,
 ): Promise<OnnxDetector> {
   const ort = await loadOrt();
   let activeLabels = labels;
   try {
-    const response = await fetch("/models/classes.json", { cache: "no-store" });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/models/classes.json`, { cache: "no-store" });
     if (response.ok) {
       const configured = await response.json();
       if (Array.isArray(configured) && configured.every((label) => typeof label === "string")) {

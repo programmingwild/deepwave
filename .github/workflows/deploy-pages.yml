@@ -30,11 +30,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # GitHub Pages is static and cannot deploy the local Next.js proxy route.
+      # The static client uses the phone URL directly; local dev keeps the proxy.
+      - name: Remove server-only camera proxy
+        run: rm -f app/api/camera-proxy/route.ts
+
       - name: Build static export
         run: npm run build:pages
         env:
           NEXT_OUTPUT_EXPORT: "1"
           NEXT_PUBLIC_BASE_PATH: /deepwave
+          NEXT_PUBLIC_STATIC_EXPORT: "1"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

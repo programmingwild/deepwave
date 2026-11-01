@@ -507,7 +507,11 @@ export function CameraPanel() {
     setVisionAssessment(null);
   };
 
-  const proxiedIpUrl = ipUrl ? `/api/camera-proxy?url=${encodeURIComponent(ipUrl)}` : "";
+  const proxiedIpUrl = ipUrl
+    ? process.env.NEXT_PUBLIC_STATIC_EXPORT === "1"
+      ? ipUrl
+      : `/api/camera-proxy?url=${encodeURIComponent(ipUrl)}`
+    : "";
 
   return (
     <Panel
