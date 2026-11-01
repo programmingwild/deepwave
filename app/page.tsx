@@ -12,6 +12,7 @@ import { RoverPanel } from "@/components/RoverPanel";
 import { JoystickControl } from "@/components/JoystickControl";
 import { FleetPanel } from "@/components/FleetPanel";
 import { DigitalTwin } from "@/components/DigitalTwin";
+import { HardwareCircuit } from "@/components/HardwareCircuit";
 import { CameraPanel } from "@/components/CameraPanel";
 import { EventLog } from "@/components/EventLog";
 import { DecisionEngine } from "@/components/DecisionEngine";
@@ -96,6 +97,7 @@ export default function Page() {
         {/* digital twin + fleet */}
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <DigitalTwin />
+          <HardwareCircuit />
           <FleetPanel />
         </div>
 

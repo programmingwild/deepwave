@@ -11,6 +11,7 @@
     "lint": "next lint",
     "test:engine": "tsx scripts/engine-test.ts",
     "e2e": "node scripts/e2e-check.cjs",
+    "models:generate": "node scripts/generate-hardware-glb.mjs",
     "ml:fetch": "python ml/fetch_dataset.py",
     "ml:check": "python ml/check_dataset.py",
     "ml:train": "python ml/train.py"
