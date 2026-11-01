@@ -6,9 +6,11 @@
 // which is what GitHub Pages needs.
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const isStaticExport = process.env.NEXT_OUTPUT_EXPORT === "1";
+const distDir = isStaticExport ? ".next-pages" : ".next";
 
 const nextConfig = {
   reactStrictMode: true,
+  distDir,
   ...(basePath ? { basePath } : {}),
   ...(isStaticExport ? { output: "export", trailingSlash: true, images: { unoptimized: true } } : {}),
 };
