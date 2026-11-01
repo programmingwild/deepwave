@@ -31,3 +31,10 @@ android/local.properties
 android/capacitor-cordova-android-plugins/
 out/
 dist/
+
+# local ML environments, datasets, checkpoints, and training outputs
+.venv/
+ml/data/
+ml/**/__pycache__/
+runs/
+yolo11n.pt

@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  --font-ui: "Google Sans", "Google Sans Text", var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --abyss: #030812;
   --panel: rgba(8, 18, 38, 0.55);
   --panel-solid: #081226;
@@ -43,7 +44,7 @@ body {
   background-color: var(--abyss);
   color: var(--txt);
   min-height: 100vh;
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 14px;
   letter-spacing: 0.01em;
   overflow-x: hidden;
@@ -101,12 +102,13 @@ body {
 }
 
 .panel-title {
-  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-family: var(--font-ui);
   font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: #7dd3fc;
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .section-label {
@@ -115,6 +117,37 @@ body {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--txt-dim);
+}
+
+/* A consistent visual cadence for every operational surface. */
+.glass-panel > header {
+  min-height: 42px;
+}
+
+.glass-panel > header > div:last-child {
+  justify-content: flex-end;
+}
+
+.camera-input-row input {
+  flex: 1 1 180px;
+}
+
+.camera-input-row button {
+  flex: 0 0 auto;
+}
+
+.camera-controls > button {
+  flex: 0 1 auto;
+}
+
+.camera-light-control {
+  flex: 1 1 210px;
+  min-width: 190px;
+}
+
+.camera-light-control input[type="range"] {
+  min-width: 80px;
+  flex: 1 1 auto;
 }
 
 ::-webkit-scrollbar {
@@ -252,6 +285,70 @@ body {
 main,
 main * {
   overflow-wrap: break-word;
+}
+
+/* Grid and flex children must be allowed to shrink inside narrow viewports. */
+main > *,
+main > * > *,
+main section,
+main canvas,
+main input,
+main select,
+main textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+main button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 639px) {
+  main {
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+  }
+
+  .panel-title {
+    letter-spacing: 0.14em;
+  }
+
+  /* Keep dense status strips readable without creating horizontal scroll. */
+  main .flex.items-center {
+    flex-wrap: wrap;
+  }
+
+  main input[type="text"] {
+    min-width: 0;
+  }
+
+  .camera-input-row {
+    align-items: stretch;
+  }
+
+  .camera-input-row input {
+    flex-basis: 100%;
+  }
+
+  .camera-input-row button {
+    width: 100%;
+  }
+
+  .camera-controls {
+    align-items: stretch;
+  }
+
+  .camera-controls > button {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+
+  .camera-light-control {
+    flex-basis: 100%;
+    min-width: 0;
+    margin-left: 0;
+  }
 }
 
 /* slightly larger touch targets on coarse pointers */

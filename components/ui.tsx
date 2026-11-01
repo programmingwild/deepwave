@@ -21,11 +21,11 @@ export function Panel({
     >
       {(title || right) && (
         <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-b border-[var(--line)] px-3 py-2">
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="h-1.5 w-1.5 shrink-0 rotate-45 bg-[var(--cyan)]/70 shadow-glow" />
-            {title && <div className="panel-title">{title}</div>}
+            {title && <div className="panel-title min-w-0 truncate">{title}</div>}
           </div>
-          {right && <div className="flex min-w-0 flex-wrap items-center gap-2">{right}</div>}
+          {right && <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-2">{right}</div>}
         </header>
       )}
       <div className="relative">{children}</div>
