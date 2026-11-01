@@ -144,6 +144,23 @@ export function DigitalTwin() {
       rovs.set(id, { group, thr: t1, light });
     }
 
+    const hardwareGroup = new THREE.Group();
+    const hardwareHull = new THREE.Mesh(
+      new THREE.BoxGeometry(2.6, 0.65, 1.7),
+      new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0x7a3d08, emissiveIntensity: 0.45, roughness: 0.35 }),
+    );
+    const hardwareThruster = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.28, 0.28, 1.1, 12),
+      new THREE.MeshBasicMaterial({ color: 0xfef08a }),
+    );
+    hardwareThruster.rotation.z = Math.PI / 2;
+    hardwareThruster.position.x = -1.35;
+    const hardwareLight = new THREE.PointLight(0xfbbf24, 35, 14);
+    hardwareLight.position.y = 0.55;
+    hardwareGroup.add(hardwareHull, hardwareThruster, hardwareLight);
+    hardwareGroup.visible = false;
+    scene.add(hardwareGroup);
+
     // auto orbit + drag orbit
     let azimuth = 0.65;
     let polar = 1.02;
@@ -222,6 +239,18 @@ export function DigitalTwin() {
         entry.light.intensity = manual ? 40 : 22;
       }
 
+      const hardware = engine.getHardwareMotion();
+      const hardwareFresh = hardware !== null && Date.now() - hardware.ts < 3000;
+      hardwareGroup.visible = hardwareFresh;
+      if (hardwareFresh && hardware) {
+        const depth = hardware.level !== null ? hardware.level / 100 : 0.5;
+        const x = THREE.MathUtils.clamp((hardware.distance - 5) * 0.18, -8, 8);
+        hardwareGroup.position.set(x, 2.2 - depth * 2.5, 10);
+        hardwareGroup.rotation.y = Math.sin(t * 0.012) * 0.08;
+        hardwareThruster.scale.x = 0.75 + (hardware.speed / 255) * 1.8;
+        hardwareLight.intensity = 18 + (hardware.speed / 255) * 55;
+      }
+
       renderer.render(scene, camera);
       raf = requestAnimationFrame(frame);
     };
@@ -247,6 +276,10 @@ export function DigitalTwin() {
       hullGeo.dispose();
       hullMat.dispose();
       thrGeo.dispose();
+      hardwareHull.geometry.dispose();
+      (hardwareHull.material as THREE.Material).dispose();
+      hardwareThruster.geometry.dispose();
+      (hardwareThruster.material as THREE.Material).dispose();
       container.removeChild(renderer.domElement);
     };
   }, []);
@@ -279,6 +312,9 @@ export function DigitalTwin() {
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-2 w-2 rounded-full bg-[#8b3dff]" /> PLUME
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full bg-[#fbbf24]" /> ARDUINO LINK
             </span>
           </div>
           <div className="pointer-events-none absolute bottom-2 left-2 font-mono text-[9px] tracking-widest text-slate-500">

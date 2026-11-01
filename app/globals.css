@@ -351,6 +351,101 @@ main button {
   }
 }
 
+/* Light mode keeps the same operational palette while switching the surface contrast. */
+[data-theme="light"] {
+  color-scheme: light;
+  --abyss: #edf4f6;
+  --panel: rgba(255, 255, 255, 0.86);
+  --panel-solid: #ffffff;
+  --line: rgba(8, 118, 148, 0.2);
+  --line-strong: rgba(8, 118, 148, 0.42);
+  --cyan: #087f9b;
+  --cyan-dim: #0e7490;
+  --txt: #102a36;
+  --txt-dim: #526b78;
+  --health: #087f5b;
+  --warn: #a16207;
+  --crit: #c2410c;
+}
+
+[data-theme="light"] body {
+  background-color: var(--abyss);
+}
+
+[data-theme="light"] .grid-bg {
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(125, 211, 252, 0.34), transparent 70%),
+    linear-gradient(rgba(8, 118, 148, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 118, 148, 0.07) 1px, transparent 1px);
+}
+
+[data-theme="light"] .glass-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(241, 248, 249, 0.82));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 24px rgba(30, 75, 90, 0.12);
+}
+
+[data-theme="light"] .text-slate-300,
+[data-theme="light"] .text-slate-400 {
+  color: #355462;
+}
+
+[data-theme="light"] .text-slate-500 {
+  color: #5c7480;
+}
+
+[data-theme="light"] .text-slate-600 {
+  color: #718892;
+}
+
+[data-theme="light"] .text-slate-200 {
+  color: #1f3b48;
+}
+
+[data-theme="light"] [class*="text-cyan-"] {
+  color: #087f9b;
+}
+
+[data-theme="light"] [class*="text-emerald-"] {
+  color: #087f5b;
+}
+
+[data-theme="light"] [class*="text-amber-"] {
+  color: #946200;
+}
+
+[data-theme="light"] [class*="text-red-"] {
+  color: #b42318;
+}
+
+[data-theme="light"] [class*="text-violet-"] {
+  color: #6d28d9;
+}
+
+[data-theme="light"] [class*="hover:text-cyan-"]:hover {
+  color: #087f9b;
+}
+
+[data-theme="light"] [class*="hover:text-amber-"]:hover {
+  color: #946200;
+}
+
+[data-theme="light"] ::placeholder {
+  color: #718892;
+  opacity: 1;
+}
+
+[data-theme="light"] [class*="bg-black/"] {
+  background-color: rgba(16, 42, 54, 0.055);
+}
+
+[data-theme="light"] [class*="bg-[#"] {
+  background-color: rgba(16, 42, 54, 0.06);
+}
+
+[data-theme="light"] .bg-slate-700 {
+  background-color: #b6c8ce;
+}
+
 /* slightly larger touch targets on coarse pointers */
 @media (pointer: coarse) {
   button {

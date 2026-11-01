@@ -298,6 +298,7 @@ private state: DashboardState;
   private drift: Record<ParamId, number> = { ...SENSOR_BASE } as Record<ParamId, number>;
   /** live readings from a connected hardware sensor node (pH/turbidity/TDS). When set, overrides the simulated values for those params. */
   private hardwareOverride: Partial<Record<ParamId, number>> | null = null;
+  private hardwareMotion: { distance: number; level: number | null; speed: number; state: string; ts: number } | null = null;
 private rateWindow = Object.fromEntries(
     PARAM_ORDER.map((id) => [id, [] as number[]]),
   ) as unknown as Record<ParamId, number[]>;
@@ -466,6 +467,14 @@ setZoom(v: number): void {
       this.hardwareOverride = Object.keys(cleaned).length ? cleaned : null;
     }
     this.emit();
+  }
+
+  setHardwareMotion(motion: { distance: number; level: number | null; speed: number; state: string; ts?: number } | null): void {
+    this.hardwareMotion = motion ? { ...motion, ts: motion.ts ?? Date.now() } : null;
+  }
+
+  getHardwareMotion(): { distance: number; level: number | null; speed: number; state: string; ts: number } | null {
+    return this.hardwareMotion;
   }
 
   clearHardwareReadings(): void {

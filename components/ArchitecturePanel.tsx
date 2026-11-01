@@ -18,76 +18,76 @@ const LAYERS: { name: string; components: string[]; highlight?: boolean }[] = [
 export function ArchitecturePanel() {
   const [open, setOpen] = useState<string | null>("EDGE PROCESSING");
   const [expanded, setExpanded] = useState(false);
+  const flow = ["SENSOR", "PI", "EDGE", "MODEL", "DECISION", "WIRELESS", "DASH"];
+  const links = ["HOUSING", "I2C / UART", "USB", "PYTHON", "NUMBA / SKLEARN", "RULES", "JSON", "WSS"];
 
   return (
     <Panel
       title="SYSTEM ARCHITECTURE"
       right={
         <button
-          onClick={() => setExpanded(!expanded)}
-          className="border border-[var(--line)] px-2 py-0.5 font-mono text-[9px] tracking-widest text-slate-400 transition-colors hover:text-[var(--cyan)]"
+          onClick={() => setExpanded((value) => !value)}
+          aria-expanded={expanded}
+          className="border border-[var(--line)] px-2 py-1 font-mono text-[9px] tracking-widest text-slate-400 transition-colors hover:border-[var(--line-strong)] hover:text-[var(--cyan)]"
         >
           {expanded ? "COLLAPSE" : "EXPAND"}
         </button>
       }
       className="h-full"
     >
-      <div className="overflow-x-auto p-3">
-        <div className="flex min-w-[760px] flex-col items-center">
-          {LAYERS.map((l, i) => (
-            <div key={l.name} className="flex w-full flex-col items-center">
-              <button
-                onClick={() => setOpen(open === l.name ? null : l.name)}
-                className={`clip-corners w-full max-w-[620px] border px-3 py-2 text-left transition-all ${
-                  open === l.name
-                    ? "border-cyan-400/50 bg-cyan-400/10 shadow-glow"
-                    : "border-[var(--line)] bg-black/25 hover:border-[var(--line-strong)]"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="mono text-[11px] font-bold tracking-[0.18em]" style={{ color: open === l.name ? "var(--cyan)" : "var(--txt)" }}>
-                    {l.name}
-                  </span>
-                  <span className="mono text-[10px] text-slate-500">{open === l.name ? "−" : "+"}</span>
-                </div>
-              </button>
-
-              {open === l.name && (
-                <div className="my-1 w-full max-w-[620px] border border-[var(--line)]/60 bg-black/30 p-2.5">
-                  <div className="flex flex-wrap gap-1.5">
-                    {l.components.map((c) => (
-                      <span key={c} className="border border-[var(--line)] bg-[#0a1630]/80 px-2 py-0.5 font-mono text-[9px] text-slate-400">
-                        {c}
-                      </span>
-                    ))}
-                  </div>
-                  {l.name === "AI ANOMALY DETECTION" && (
-                    <div className="mt-2 text-[10px] text-slate-500">
-                      Model scope: deviation detection only. Pollutant identification and source attribution are NOT implemented.
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {i < LAYERS.length - 1 && (
-                <div className="flex flex-col items-center py-1">
-                  <svg width="14" height="18">
-                    <line x1="7" y1="0" x2="7" y2="14" stroke="rgba(34,211,238,0.5)" strokeWidth="1.2" className="flow-line" />
-                    <polygon points="3,12 7,17 11,12" fill="rgba(34,211,238,0.6)" />
-                  </svg>
-                  <span className="mono text-[8px] tracking-widest text-slate-600">
-                    {i === 0 ? "HOUSING" : i === 1 ? "I2C/UART" : i === 2 ? "USB" : i === 3 ? "PYTHON" : i === 4 ? "NUMBA/SKLEARN" : i === 5 ? "RULES" : i === 6 ? "JSON" : "WSS"}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+      <div className="space-y-4 p-3 sm:p-4">
+        <div className="border border-cyan-400/20 bg-cyan-400/[0.04] p-3">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="section-label text-cyan-300">DATA FLOW</span>
+            <span className="mono text-[9px] tracking-widest text-slate-600">LIVE PIPELINE</span>
+          </div>
+          <div className="flex items-center gap-1 overflow-x-auto pb-1">
+            {flow.map((step, index) => (
+              <div key={step} className="flex shrink-0 items-center gap-1">
+                <span className="border border-cyan-400/30 bg-[#071a30] px-2.5 py-1.5 font-mono text-[10px] font-bold tracking-widest text-cyan-200">
+                  {step}
+                </span>
+                {index < flow.length - 1 && <span className="px-0.5 font-mono text-xs text-cyan-400/60">→</span>}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="mt-3 flex items-center justify-between border-t border-[var(--line)] pt-2">
-          <span className="section-label">DATA FLOW</span>
-          <span className="mono text-[10px] text-slate-500">
-            SENSOR → PI → EDGE → MODEL → DECISION → WIRELESS → DASHBOARD
-          </span>
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          {LAYERS.map((layer, index) => {
+            const active = open === layer.name;
+            const showDetails = expanded || active;
+            return (
+              <div key={layer.name} className={`relative border p-3 transition-colors ${active ? "border-cyan-400/50 bg-cyan-400/[0.07]" : "border-[var(--line)] bg-black/20 hover:border-[var(--line-strong)]"}`}>
+                <button onClick={() => setOpen(active ? null : layer.name)} aria-expanded={showDetails} className="flex w-full items-start gap-3 text-left">
+                  <span className={`mono flex h-6 w-6 shrink-0 items-center justify-center border text-[10px] ${active ? "border-cyan-300/60 text-cyan-200" : "border-[var(--line)] text-slate-500"}`}>
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className={`mono block text-[11px] font-bold tracking-[0.12em] ${active ? "text-cyan-200" : "text-[var(--txt)]"}`}>{layer.name}</span>
+                    {index < links.length && <span className="mt-1 block font-mono text-[9px] tracking-widest text-slate-600">↓ {links[index]}</span>}
+                  </span>
+                  <span className="mono text-[11px] text-slate-500">{showDetails ? "−" : "+"}</span>
+                </button>
+
+                {showDetails && (
+                  <div className="mt-3 border-t border-[var(--line)] pt-2.5">
+                    <div className="flex flex-wrap gap-1.5">
+                      {layer.components.map((component) => (
+                        <span key={component} className="border border-[var(--line)] bg-[#0a1630]/80 px-2 py-1 font-mono text-[9px] text-slate-400">{component}</span>
+                      ))}
+                    </div>
+                    {layer.name === "AI ANOMALY DETECTION" && <p className="mt-2 text-[10px] leading-relaxed text-slate-500">Model scope: deviation detection only. Pollutant identification and source attribution are not implemented.</p>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--line)] pt-3">
+          <span className="section-label">TRANSPORT LINKS</span>
+          <span className="mono text-[9px] tracking-widest text-slate-500">HOUSING · I2C / UART · USB · PYTHON · NUMBA / SKLEARN · RULES · JSON · WSS</span>
         </div>
       </div>
     </Panel>

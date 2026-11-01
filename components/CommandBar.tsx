@@ -11,6 +11,22 @@ export function CommandBar() {
   const now = useClock();
   const [confirmEStop, setConfirmEStop] = useState(false);
   const [estopArmed, setEstopArmed] = useState(false);
+  const [lightMode, setLightMode] = useState(false);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem("deepwave-theme");
+    const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+    const nextLight = stored ? stored === "light" : prefersLight;
+    setLightMode(nextLight);
+    document.documentElement.dataset.theme = nextLight ? "light" : "dark";
+  }, []);
+
+  const toggleTheme = () => {
+    const nextLight = !lightMode;
+    setLightMode(nextLight);
+    document.documentElement.dataset.theme = nextLight ? "light" : "dark";
+    window.localStorage.setItem("deepwave-theme", nextLight ? "light" : "dark");
+  };
 
   useEffect(() => {
     if (confirmEStop) {
@@ -85,6 +101,14 @@ export function CommandBar() {
           <div className="mr-2 hidden items-center gap-2 lg:flex">
             <StatusLed status={estopArmed ? "ACTIVE" : "INACTIVE"} />
           </div>
+          <button
+            onClick={toggleTheme}
+            aria-label={lightMode ? "Switch to dark mode" : "Switch to light mode"}
+            title={lightMode ? "Switch to dark mode" : "Switch to light mode"}
+            className="clip-corners border border-[var(--line)] bg-black/20 px-3 py-2 font-mono text-[10px] font-bold tracking-widest text-[var(--txt-dim)] transition-colors hover:border-[var(--line-strong)] hover:text-[var(--cyan)]"
+          >
+            {lightMode ? "☾ DARK" : "☀ LIGHT"}
+          </button>
           <button
             onClick={handleEStop}
             className={`clip-corners border px-4 py-2 text-[10px] font-bold tracking-widest transition-all ${

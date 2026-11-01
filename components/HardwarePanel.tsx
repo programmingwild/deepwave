@@ -31,6 +31,7 @@ export function HardwarePanel() {
     setConnected(false);
     setReading(null);
     engine.clearHardwareReadings();
+    engine.setHardwareMotion(null);
     pushLog("disconnected");
   }, [pushLog]);
 
@@ -90,6 +91,7 @@ export function HardwarePanel() {
               if (isNaN(dist)) continue;
               const r: Reading = { ph, turbidity, tds, distance: dist, level, speed, state, ts: Date.now() };
               setReading(r);
+              engine.setHardwareMotion(r);
               // feed real water-quality readings into the dashboard engine
               const hw: Partial<Record<"ph" | "turbidity" | "tds", number>> = {};
               if (ph !== null) hw.ph = ph;
