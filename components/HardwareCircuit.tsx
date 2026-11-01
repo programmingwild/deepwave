@@ -9,6 +9,7 @@ import { Chip, Panel } from "@/components/ui";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const ASSET_ROOT = `${basePath}/models/hardware`;
+const WORKFLOW = ["SENSORS", "ARDUINO", "USB", "PI / PYTHON", "EDGE MODEL", "DECISION", "DASH"];
 
 function wire(from: THREE.Vector3, to: THREE.Vector3, color: number) {
   const curve = new THREE.CatmullRomCurve3([
@@ -162,6 +163,7 @@ export function HardwareCircuit() {
 
   const motion = engine.getHardwareMotion();
   const linked = motion !== null && Date.now() - motion.ts < 3000;
+  const activeStage = linked ? Math.floor(Date.now() / 850) % WORKFLOW.length : -1;
 
   return (
     <Panel
@@ -181,6 +183,30 @@ export function HardwareCircuit() {
           </div>
           <div className="pointer-events-none absolute bottom-2 right-2 z-10 font-mono text-[9px] text-slate-500">
             {linked ? `${motion?.distance.toFixed(1)} CM · PWM ${motion?.speed}` : "NO SERIAL DATA"}
+          </div>
+        </div>
+        <div className="border-t border-[var(--line)] bg-black/20 px-3 py-2">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <span className="section-label">TELEMETRY WORKFLOW</span>
+            <span className="mono text-[9px] text-slate-500">{linked ? "PACKET FLOW ACTIVE" : "SIMULATION STANDBY"}</span>
+          </div>
+          <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+            {WORKFLOW.map((stage, index) => (
+              <div key={stage} className="flex shrink-0 items-center gap-1">
+                <span
+                  className={`border px-1.5 py-1 font-mono text-[8px] tracking-wider transition-all duration-300 ${
+                    activeStage === index
+                      ? "border-cyan-300/70 bg-cyan-300/20 text-cyan-200 shadow-glow"
+                      : activeStage > index
+                        ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
+                        : "border-[var(--line)] bg-black/20 text-slate-500"
+                  }`}
+                >
+                  {stage}
+                </span>
+                {index < WORKFLOW.length - 1 && <span className="font-mono text-[10px] text-cyan-400/50">→</span>}
+              </div>
+            ))}
           </div>
         </div>
       </div>
