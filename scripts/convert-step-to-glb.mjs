@@ -5,14 +5,17 @@ import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 
 const outputDir = path.resolve("public/models/hardware");
+const downloadsDir = process.env.USERPROFILE
+  ? path.join(process.env.USERPROFILE, "Downloads")
+  : path.resolve("Downloads");
 const inputs = [
   {
-    source: process.argv[2] ?? "C:/Users/Janardhanan/Downloads/arduino uno.STEP",
+    source: process.argv[2] ?? path.join(downloadsDir, "arduino uno.STEP"),
     output: "arduino-uno-real.glb",
     name: "Arduino Uno R3 - supplied STEP CAD",
   },
   {
-    source: process.argv[3] ?? "C:/Users/Janardhanan/Downloads/Raspberry Pi 4 Model B.STEP",
+    source: process.argv[3] ?? path.join(downloadsDir, "Raspberry Pi 4 Model B.STEP"),
     output: "raspberry-pi-real.glb",
     name: "Raspberry Pi 4 Model B - supplied STEP CAD",
   },
